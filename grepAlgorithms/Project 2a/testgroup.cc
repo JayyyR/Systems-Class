@@ -1,0 +1,36 @@
+#include "group.h"
+#include <cstdlib>  // include for the function exit()
+#include <iostream> // include for the input/output members
+#include <iomanip>  // include for input/output formatting
+#include <fstream>  // include for the file i/o members
+
+using namespace std;
+using std::ifstream;
+
+int main(){
+   GroupOfNumbers G(0,1000,100);
+   GroupOfNumbers A=G;
+   GroupOfNumbers C=G;
+   GroupOfNumbers B=G;
+  G.displayGroupOfNumbers();
+  A.displayGroupOfNumbers();
+  C.displayGroupOfNumbers();
+  B.displayGroupOfNumbers();
+  
+  G.heapsort();
+  cout<<"heap"<<endl;
+  G.displayGroupOfNumbers();
+
+  A.insertion_sort();
+  cout<<"insertion"<<endl;
+  A.displayGroupOfNumbers();
+  
+  C.mergesort();
+  cout<<"merge"<<endl;
+  C.displayGroupOfNumbers();
+  
+  B.quicksort();
+  cout<<"quick"<<endl;
+  B.displayGroupOfNumbers();
+
+}

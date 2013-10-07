@@ -1,0 +1,115 @@
+let _ = print "Please enter the number of assignments" in
+let numAssignments = readInt in
+let totalWeight = 0 in
+let numStudents = 0 in
+let listOfWeights = _ in
+let studentAvg = _ in
+let gradeList = _ in
+let listOfAvg = _ in
+
+
+
+
+
+(*Main function to grab weights from user*)
+fun grabWeights with n =
+if n=0 then 
+
+if totalWeight <> 100 then
+let _ = print "Your weights don't add up! Aborting..." in
+1
+else
+
+(grabStudents numAssignments)
+
+else
+let _ = print "Please enter assignment weight" in
+let assignWeight = readInt in
+let _ = print "weight entered was: " in
+let _ = print assignWeight in
+
+let totalWeight = totalWeight + assignWeight in
+let _ = print "total weight is: " in
+let _ = print totalWeight in
+
+let listOfWeights = listOfWeights@assignWeight in
+let _ = print listOfWeights in
+
+(grabWeights (n-1)) in
+
+
+(*function to grab student names and grades*)
+fun grabStudents with m =
+
+let numStudents = (numStudents +1) in
+let _ = print " Please enter a student" in
+let student = readString in
+let listOfGrades = _ in
+(grabGrades student m listOfGrades)
+
+
+
+
+in
+
+
+(*function to grab grades of each student*)
+fun grabGrades with studentName, k, gradeList =
+
+if k = 0 then
+
+
+let gradeList = gradeList@studentName in
+
+let _ = print gradeList in
+let _ = print "Another student? (y/n)" in
+let answer = readString in
+
+if answer="y" then
+let _ = print "he said yes!" in
+(grabStudents numAssignments)
+
+else
+let _ = print "he said no :(" in
+let _ = print "num students is" in
+let _ = print numStudents in
+
+(calcStudent gradeList numAssignments numStudents)
+
+
+else
+
+let _ = print "Please enter a grade" in
+let gradeEntered = readInt in
+
+let gradeList = gradeList@gradeEntered in
+
+(grabGrades studentName (k-1) gradeList) in
+
+(*function to calc averages*)
+fun calcStudent with glist, assignNum, stuNum = 
+
+if stuNum = 0 then
+1
+else
+
+(calcAvg glist assignNum)
+
+(*function to calc averages for each student*)
+fun calcAvg with glist, assignNum = 
+
+if assignNum = 0 then
+1
+else
+
+let listOfAvg = listOfAvg@#glist in
+let weightedGrade = #glist * #listOfWeights in
+let listOfAvg = listOfAvg@weightedGrade in
+
+let _ = print "list of avg is" in
+let _ = print listOfAvg in
+
+
+
+(grabWeights numAssignments)
+

@@ -1,0 +1,162 @@
+\documentclass[11pt]{article}
+
+\usepackage{times,mathptm}
+\usepackage{pifont}
+\usepackage{exscale}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{epsfig}
+
+\textwidth 6.5in
+\textheight 9in
+\oddsidemargin -0.0in
+\topmargin -0.0in
+
+\parindent 0pt     % How much the first word of a paragraph is indented.
+\parskip 0pt       % How much extra space to leave between paragraphs.
+
+\begin{document}
+
+\begin{center}             % If you only centering 1 line use \centerline{}
+\begin{LARGE}
+{\bf CS 312 Work Assignment 2}
+\end{LARGE}
+\vskip 0.25cm      % vertical skip (0.25 cm)
+
+**Joseph Acosta**\\
+**Collaborated with Timothy Cohen**\\
+\end{center}
+
+\begin{enumerate}
+
+\item Write regular expressions for the following languages over alphabet $/sigma = {a,b}$.
+\begin{enumerate}
+\item $(\lambda $x.$\lambda$y.y)22 5 \hspace{12pt}\\
+(($\lambda$y.y) [22/x])5\\
+($\lambda$y.y) 5\\
+y[5/y]\\
+5
+\item $(\lambda $x.x)($\lambda$y.y)0 \hspace{12pt}\\
+$(\lambda $x.x)y[0/y]\\
+x[0/x]\\
+0
+\item $(\lambda$w.$\lambda$z.z+w) 97\hspace{12pt}\\
+$\lambda$z.z+w[97/w]\\
+$\lambda$z.z + 97\\
+\item $(\lambda$a.$\lambda$b.a)$(\lambda$a.$\lambda$b.b)($\lambda$x.x) \hspace{12pt}\\
+$(\lambda$a.$\lambda$b.a) $\lambda$b.b[$\lambda$x.x/a]\\
+$(\lambda$a.$\lambda$b.a) $\lambda$b.b\\
+$\lambda$b.a[$\lambda$b.b/a]\\
+$\lambda$b.b.b\\
+
+\item $(\lambda$x.x x x)$(\lambda$x.x x x) \hspace{12pt}\\
+xxx[$\lambda$x.xxx/x]\\
+$(\lambda$x.x x x)$(\lambda$x.x x x)$(\lambda$x.x x x)\\
+$(\lambda$x.x x x) xxx[$(\lambda$x.x x x)/x]\\
+$(\lambda$x.x x x)$(\lambda$x.x x x)$(\lambda$x.x x x)$(\lambda$x.x x x)\\
+divergent\\
+
+\item ($\lambda$a.($\lambda$b.b b)($\lambda$c.c c)) \hspace{12pt} \\
+$\lambda$a. bb[$\lambda$c.cc/b]\\
+($\lambda$a.($\lambda$c.cc)($\lambda$c.cc))\\
+$\lambda$a.  cc[$\lambda$c.cc/c]\\
+$\lambda$a.($\lambda$c.cc)($\lambda$c.cc)($\lambda$c.cc)\\
+divergent
+
+\end{enumerate}
+
+\item Prove that the following $\lambda$ expressions are semantically equivalent:
+\begin{enumerate}
+\item ($\lambda$x.$\lambda$y.x + y) 44 and ($\lambda$b.44 + b)\hspace{12pt}\\
+
+($\lambda$x.$\lambda$y.x + y) 44\\
+Do $\beta$ reduction first\\
+$\lambda$y.x + y[44/x]\\
+$\lambda$y.44 + y\\
+Do $\alpha$ reduction\\
+$\lambda$b.44 + b\\
+This is equal to ($\lambda$b.44 + b), therefore they are semantically equivalent.
+
+\item $\lambda$x.$\lambda$y.y and $\lambda$a.$\lambda$b.b\hspace{12pt}\\
+
+$\lambda$x.$\lambda$y.y\\
+Do $\alpha$ reduction\\
+$\lambda$a.$\lambda$y.y\\
+Do $\alpha$ reduction\\
+$\lambda$a.$\lambda$b.b\\
+This is equal to $\lambda$a.$\lambda$b.b, therefore they are semantically equivalent.
+\end{enumerate}
+
+
+\item In lecture, we saw that it is possible to encode recursion in $\lambda$-calculus using fixed-point operators. We also studied one such operator, the Y-combinator.\\
+After learning about the Y-combinator in lecture, a student in CS312 proposes the following "simpler" fixed-point operator:\\
+\begin{center}
+$\lambda$y.($\lambda$x.y (x x))\\
+\end{center}
+Recall that any fixed point operator must have the property that v=h(v) for any function h. Is the proposed construct a fixed-point operator or not? Prove your answer.\\
+
+v = $\lambda$y.($\lambda$x.y (x x))\\
+does v(h)=v?\\
+v(h) = ($\lambda$y.($\lambda$x.y (x x)))h\\
+$\lambda$x.y (x x)[h/y]\\
+$\lambda$x.h (x x)\\
+This is not the same as v, so it is not a fixed point operator.\\
+
+\item In this question you will write three different programs that compute the factorial of 5 in L:\\
+
+\begin{enumerate}
+\item Write a program in L that computes the factorial of 5\\
+
+fun fact with n = \\
+if n$<=$0 \\
+then 1 \\
+else \\
+n* (fact (n-1)) in\\ 
+(fact 5)\\
+
+\item Write the same program without using the function definition\\
+
+let fact = lambda n. if n=0 then\\
+1 \\
+else \\
+n* (fact(n-1)) in \\
+(fact 5)\\
+
+\item Write the same program without function definitions or let bindings (hint: the Y-combinator may be useful)\\
+
+((lambda f.(lambda x.f(x x))lambda x.f(x x)) \\
+(lambda f.lambda n.( if n=0 then 1 else n*(f(n-1))))) 5\\
+\end{enumerate}
+\item Write a function in L that, applied to a list, returns the length of this list. For example your function should return "2" for the list 33@5, 0 for the list Nil and 3 for the list "cs312"@"is"@"fun"\\
+
+(Note: in this program you can replace "33@5" with whatever list you want)\\
+
+fun length with list =\\ 
+if isNil list then 0 else (length #list)+1\\
+in \\
+(length 33@5)\\
+
+\item Write a function in L that reverses a list. Be careful! The reversal of\\
+
+[1,[2,3]]\\
+is [3, [2,1]]. not [[3,2],1].\\
+
+Hint: You will probably fist need to write a list concatenation helper function.\\
+
+(Note: in this program you can replace "1@2@3@4@5" with whatever list you want)\\
+
+fun cat with l1, l2 =\\
+if isNil l1 then l2 else\\
+!l1@(cat #l1 l2)\\
+in\\
+
+fun rev with list =\\ 
+if isNil list then Nil else\\
+let h = !list in\\
+let t = #list in\\
+(cat (rev t) h)\\
+in\\
+(rev 1@2@3@4@5)\\
+\end{enumerate}
+
+\end{document}

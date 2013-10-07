@@ -1,0 +1,12 @@
+fun cat with l1, l2 =
+if isNil l1 then l2 else
+!l1@(cat #l1 l2)
+in
+
+fun rev with list = 
+if isNil list then Nil else
+let h = !list in
+let t = #list in
+(cat (rev t) h)
+in
+(rev 1@2@3)

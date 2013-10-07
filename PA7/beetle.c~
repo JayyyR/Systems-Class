@@ -1,0 +1,352 @@
+ 
+ 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
+#include <string.h>
+//Joseph Acosta
+//Program 1
+//CS 415
+
+
+//prototypes
+int isNumeric(const char*x);
+int changeCoor();
+int start_child(char *cmd, FILE **readpipe, FILE **writepipe);
+
+//globals
+double avgTimeSF = 0;
+int curLife = 0;
+int noBeep = 0;
+double size;
+double scale = 1;
+int runs;
+int runCount;
+double totalTime = 0;
+double xcoor = 0;
+double ycoor = 0;
+double runsSoFar;
+FILE *read_from, *write_to;
+fd_set mask;
+
+int main(int argc, char *argv[]){
+  
+  //int childpid;
+  //long testNum = random();
+  //printf("random test number is %lu", testNum);
+  if (argc == 1){
+    printf("Error.\n");
+    exit(1);
+  }
+  
+  if (isNumeric(argv[1]) == 0 || isNumeric(argv[2]) == 0 || argv[3]){
+    printf("Please enter two valid numeric inputs\n");
+    exit(1);
+  }
+  
+  size = atoi(argv[1]);
+  
+  if (size <= 0){
+   fprintf(stderr, "Please Enter a Square Size Greater than Zero\n");
+   exit(1);  
+  }
+  runs = atoi(argv[2]);
+  
+  //printf("SIZE IS %f\n", size);
+  //printf("RUNS IS %d\n", runs);
+  runCount = runs;
+  start_child("wish",&read_from,&write_to);
+  changeCoor();
+  return 0;
+}
+
+
+
+
+int changeCoor(){
+  //double topRec = ((10-size)/2);
+  //double bottomRec = 10 - ((10-size)/2);
+  
+  //printf("top rec is %f\n", topRec);
+  //printf("bottom rec is %f\n", bottomRec);
+  fprintf(write_to, "source splot.tcl\n");
+  //fprintf(write_to, ".c create rectangle %fi %fi %fi %fi -width 3\n", topRec, topRec, bottomRec, bottomRec);
+  fprintf(write_to, ".c create rectangle 50 50 550 550 -width 3\n");
+  //probs temp
+  double mid = 300;
+  //printf("mid is %f\n", mid);
+  
+  while( runCount>0){
+    //printf("back at the top\n");
+    double topx = mid-5;
+    double topy = mid-5;
+    double bottomx = mid+5;
+    double bottomy = mid+5;
+    
+    runsSoFar = runs-runCount+1;
+    fprintf(write_to, ".c create text 0 0 -anchor nw -text \"Beetle Number: %.0lf\" -tags beetleNum \n", runsSoFar);  //beetle number
+    //fprintf(write_to, ".c bind beetleNum <Button-1> {.c itemconfigure beetleNum -text \"Foo\"}");
+    //fprintf(write_to, "button .b4 -text \"%.0lf\" -command {puts stdout \"lifetime\"}", runsSoFar); //beetle button
+    //fprintf(write_to, "pack .sf.b4 -side left -expand 1 -fill x");
+    fprintf(write_to, ".c create oval %f %f %f %f -fill black -tags beetle\n", topx, topy, bottomx, bottomy); //beetle
+    //set to random number between 0 and 359
+    int steps = 0;
+    int secs = 0;
+    int firstTime = 1; //tracks first tiem
+    while(fabs(ycoor)<=(size/2) && fabs(xcoor)<=(size/2)){
+      
+      
+      struct timeval timeout;
+      timeout.tv_sec = 2;
+      timeout.tv_usec = 0;
+      
+      double changeTime;
+      //if its the first time, the beetle doesn't sleep so movement takes 1 second
+      if (firstTime == 1){
+	changeTime = scale*1;
+	firstTime = 0;
+      }
+      else{
+	changeTime = scale*2;
+      }
+      int helpTime = scale*2;
+      //if less than a second
+      if (changeTime < 1){
+	changeTime = changeTime * 1000000; //change to microseconds
+	timeout.tv_sec = 0;
+	timeout.tv_usec = changeTime;
+	//printf("changeTime is %f\n", changeTime);
+      }
+      //greater than one second
+      else{
+	//printf("changeTime is else %f\n", changeTime);
+	//printf("helpTime is else %d\n", helpTime);
+	double microLeft = changeTime-helpTime;
+	microLeft = microLeft * 1000000; //change to nanoseconds
+	//printf("mciro left is %f\n", microLeft);
+	timeout.tv_sec = helpTime;
+	timeout.tv_usec = microLeft;
+      }
+      
+     
+      
+      int readfd = fileno(read_from);
+      FD_ZERO(&mask);
+      FD_SET(readfd,&mask);
+      char result[100];
+      
+      
+      //while there is time remaining keep reading commands
+      while (timeout.tv_sec > 0 || timeout.tv_usec > 0) {
+	
+	//use select to read in commands
+	if ( select(readfd+1, &mask, (fd_set *)0, (fd_set *)0, &timeout)  > 0 ){
+	  fgets (result, 100, read_from);
+	  //printf("result is %s\n", result);
+	  
+	  //if silent button was pushed
+	  
+	  if (strcmp(result, "silent\n") == 0){
+	    noBeep = 1;
+	    fprintf(write_to, ".b2 configure -text \"Sound\"\n");
+	    fprintf(write_to, ".b2 configure -command  {puts stdout \"sound\"}\n");
+	    // fprintf(write_to, "pack .b3 -side left  -expand 1 -fill x\n");
+	  }
+	  
+	  if (strcmp(result, "lifetime\n") == 0){
+	    //printf("lifetime command received\n");
+	    if (curLife==0)
+	      curLife = 1;
+	    else
+	      curLife = 0;
+	    
+	  }
+	  
+	  //if sound button pushed
+	  if (strcmp(result, "sound\n") == 0){
+	    noBeep = 0;
+	    fprintf(write_to, ".b2 configure -text \"Silent\"\n");
+	    fprintf(write_to, ".b2 configure -command  {puts stdout \"silent\"}\n");
+	    // fprintf(write_to, "pack .b3 -side left  -expand 1 -fill x\n");
+	  }
+	  
+	  //if scale button pushed
+	  if (strcmp(result, "scale\n") == 0){
+	    fgets (result, 100, read_from);
+	    //printf("result in scale is .%s.\n", result);
+	    
+	    //convert result to a double
+	    char* end;
+	    scale = strtod(result, &end);
+	    //printf("double result scale is %f\n", scale);
+	    
+	    // fprintf(write_to, "pack .b3 -side left  -expand 1 -fill x\n");
+	  }
+	  
+	}
+	//printf("after select timeout.tv_sec is %lu\n", (long) timeout.tv_sec);
+	//printf("after select timeout.tv_sec is %lu\n", timeout.tv_usec);
+	
+	
+	//if beetle num was toggled
+	if (curLife==1){
+	  fprintf(write_to, ".c delete avgTime\n");
+	  fprintf(write_to, ".c create text 600 0 -anchor ne -text \"Life of Current Beetle: %d\" -tags avgTime\n", secs); 
+	}
+	else{
+	  fprintf(write_to, ".c delete avgTime\n");
+	  fprintf(write_to, ".c create text 600 0 -anchor ne -text \"Avg Lifetime: %.2lf\" -tags avgTime\n", avgTimeSF); 
+	}
+      }
+      
+//       //must sleep for time remaning in timeout
+//       struct timespec remTime;
+//       remTime.tv_sec = timeout.tv_sec;
+//       remTime.tv_nsec = timeout.tv_usec * 1000; //convert micro to nanoseconds
+//       
+//       
+//       //sleep for remaining time
+//       nanosleep(&remTime, NULL);
+      
+      
+      
+      //add a passing out second if its not the beginning
+      if (steps != 0)
+	secs++;
+	
+      double randRadians = random();
+      
+      //add appropriate values to coordiant
+      //printf("moved %f in x direction\n", cos(randRadians));
+      //printf("moved %f in y direction\n", sin(randRadians));
+      xcoor += cos(randRadians);
+      ycoor += sin(randRadians);
+      steps++;
+      secs ++;
+      
+      double oldTopx = topx;
+      double oldTopy = topy;
+      double oldBottomx = bottomx;
+      double oldBottomy = bottomy;
+      
+      //for every inch, it moves 500/size pixels because 500 is size of rectangle
+      topx += (500/size)*cos(randRadians);
+      bottomx += (500/size)*cos(randRadians);
+      topy += (500/size)*sin(randRadians);
+      bottomy += (500/size)*sin(randRadians);
+      //change this to sleep 2 later
+      
+      
+     
+      
+      //if beetle num was toggled
+      if (curLife==1){
+	fprintf(write_to, ".c delete avgTime\n");
+	fprintf(write_to, ".c create text 600 0 -anchor ne -text \"Life of Current Beetle: %d\" -tags avgTime\n", secs); 
+      }
+      else{
+	fprintf(write_to, ".c delete avgTime\n");
+	fprintf(write_to, ".c create text 600 0 -anchor ne -text \"Avg Lifetime: %.2lf\" -tags avgTime\n", avgTimeSF); 
+      }
+      
+      
+      //draw movement of beetle
+      fprintf(write_to, ".c delete beetle\n");
+      
+      //if within an inch of the edge, color red
+      if (fabs(ycoor)>=((size/2)-1) || fabs(xcoor)>=((size/2)-1)){
+	fprintf(write_to, ".c create oval %f %f %f %f -fill red -tags beetle\n", topx, topy, bottomx, bottomy);
+      }
+      else{
+	fprintf(write_to, ".c create oval %f %f %f %f -fill black -tags beetle\n", topx, topy, bottomx, bottomy);
+      }
+      fprintf(write_to, ".c create line %f %f %f %f -tags line\n", (oldTopx+oldBottomx)/2, (oldTopy+oldBottomy)/2, (topx+bottomx)/2, (topy+bottomy)/2);
+      
+      
+    }
+    ycoor=0;
+    xcoor=0;
+    //printf("--------------------------done with one inner loop------------------------\n");
+    if (noBeep == 0){
+      fprintf(write_to, "bell\n");
+    }
+    sleep(2);
+    fprintf(write_to, ".c delete beetle\n");
+    fprintf(write_to, ".c delete line\n");
+    fprintf(write_to, ".c delete beetleNum\n");
+    fprintf(write_to, ".c delete avgTime\n");
+    
+    
+    totalTime+=secs;
+    runCount--;
+    
+    //printf("runs so far is %f\n", runsSoFar);
+    //printf("totalTime is %f\n", totalTime);
+    avgTimeSF = totalTime/runsSoFar;
+    //printf("avg time so far is %f\n", avgTimeSF);
+    if (curLife ==0){
+      fprintf(write_to, ".c create text 600 0 -anchor ne -text \"Avg Lifetime: %.2lf\" -tags avgTime\n", avgTimeSF); 
+    }
+    
+    //printf("runCount after minus minus %d\n", runCount);
+  }
+
+  double avgTime = totalTime/runs;
+  int finalSize = size;
+  printf("%d by %d square, %d beetles, mean beetle lifetime is is %.1lf\n", finalSize, finalSize, runs, avgTime);
+  fprintf(write_to, "exit");
+  return 0;
+
+}
+
+
+/* Exec the named cmd as a child process, returning
+ * two pipes to communicate with the process, and
+ * the child's process ID */
+int start_child(char *cmd, FILE **readpipe, FILE **writepipe) {
+    int childpid, pipe1[2], pipe2[2];
+    
+    if ((pipe(pipe1) < 0) || (pipe(pipe2) < 0) ) {
+       perror("pipe"); exit(-1);
+    }
+
+    if ((childpid = fork()) < 0) {
+       perror("fork"); exit(-1);
+    } else if (childpid > 0) {   /* Parent. */
+       close(pipe1[0]); close(pipe2[1]);
+       /* Write to child on pipe1[1], read from child on pipe2[0]. */
+       *readpipe = fdopen(pipe2[0], "r");
+       *writepipe = fdopen(pipe1[1], "w");
+       setlinebuf(*writepipe);
+       return childpid;
+
+    } else { /* Child. */
+       close(pipe1[1]); close(pipe2[0]);
+       /* Read from parent on pipe1[0], write to parent on pipe2[1]. */
+       dup2(pipe1[0],0); dup2(pipe2[1],1);
+       close(pipe1[0]); close(pipe2[1]);
+
+       if (execlp(cmd, cmd, NULL) < 0)
+          perror("execlp");
+       /* Never returns */
+    }
+    return 0;
+}
+
+
+//this helper method grabbed from http://rosettacode.org/wiki/Determine_if_a_string_is_numeric#C
+int isNumeric (const char * s)
+{
+    if (s == NULL || *s == '\0' || isspace(*s))
+      return 0;
+    char * p;
+    strtol (s, &p, 10);
+    return *p == '\0';
+}

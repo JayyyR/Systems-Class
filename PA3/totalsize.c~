@@ -1,0 +1,352 @@
+#define _GNU_SOURCE
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <string.h>
+#include <limits.h>
+#include <sys/stat.h> 
+#include <unistd.h>
+#include <errno.h> 
+#include <sys/sysmacros.h> 
+#include <time.h>
+#include <signal.h>
+#include <sys/wait.h>
+//Joseph Acosta
+//totalsize.c
+
+
+//structs
+struct node {
+  char* data;
+  struct node *next;
+};
+
+struct list {
+  struct node *start;
+  struct node *end;
+};
+
+//Declarations
+int initList(struct list *sList);
+int push(struct list *sList, char* data);
+char* grab(struct list *sList);
+int emptyCheck(struct list *sList);
+int pop(struct list *sList);
+int print(struct list *sList);
+
+//globals
+struct list idList;
+int idListSize = 0;
+int once = 0;
+int first = 1;
+
+
+int main(int argc, char *argv[]){
+  
+  initList(&idList);
+  //printf("here\n");
+  struct stat info;
+  char* inputData;
+  inputData = malloc ((LINE_MAX* sizeof(char))+1);
+  
+  char* units;
+  units = malloc ((LINE_MAX* sizeof(char))+1);
+  
+  char* mompid;
+  mompid = malloc ((LINE_MAX* sizeof(char))+1);
+  
+  char* sleepTime;
+  sleepTime = malloc ((LINE_MAX* sizeof(char))+1);
+  
+  //grab file names
+  //int end = 0;
+  
+  //use fgetc to grab file names to output to stdout
+  //make sure stdout doesn't have newlines and is separated by whitespace
+  int e = 0;
+  char oneLet;
+  oneLet = fgetc(stdin);
+  while (oneLet != EOF){
+    //fprintf(stderr, "-- %c ", oneLet);
+    if (oneLet != '\n'){
+      inputData[e] = oneLet;
+      e++;
+    }
+    else{
+      inputData[e] = ' ';
+      e++;
+    }
+    //fprintf(stderr, "%d\n", oneLet!=EOF);
+    
+    oneLet = fgetc(stdin);
+  }
+  //fprintf(stderr, "inputdata in TOTALSIZE IS: %s\n", inputData);
+  //fprintf(stdout, "inputdata is %s\n", inputData);
+  int j;
+  int charCount = 0;
+  for (j=0; inputData[j] != '\0'; j++){
+    charCount++;
+  }
+  //printf("charCount is %d\n", charCount);
+  //while loop to separate file names on white space
+  int i = 0;
+  long totalBytes = 0;
+  while(i<charCount){
+    
+    char* fileName;
+    fileName = malloc ((LINE_MAX* sizeof(char))+1);
+    
+    sleepTime = getenv("TSTALL");
+    //printf("sleeptime is %s\n", sleepTime);
+    
+    if (sleepTime != NULL){
+      
+      //printf("here\n");
+      int validInt = 1;
+      
+      
+      //check if valid integer
+      int c;
+      int tStallCount = 0;
+      
+      
+      //count chars in sleepTime
+      for (c=0; sleepTime[c] !='\0'; c++){
+	//printf("in loop\n");
+	tStallCount++;
+      }
+      //printf("tStallCount is %d\n", tStallCount);
+      if (!sleepTime){
+	//printf("string not valid\n");
+	validInt = 0;
+	break;
+      }
+      
+      //Check for non-digit chars in the rest of the stirng.
+      //loop through sleep time to make sure each char is a digit
+      int v = 0;
+      while (v<tStallCount)
+      {
+	if (!isdigit(sleepTime[v])){
+	  //printf("character is not digit\n");
+	  validInt = 0;
+	  break;
+	}
+	else
+	  v++;
+      }
+      /////////////////////////////////////////
+      
+      
+      //if it is a positive integer, sleep for tha tmany seconds
+      if (validInt == 1){
+	//printf("here\n");
+	int sleepInt = atoi(sleepTime);
+	//printf("sleepINT is %d\n", sleepInt);
+	sleep(sleepInt);
+      }
+      //dont sleep
+      else{}
+	//printf("not here\n");
+    }
+    
+    int q;
+    for (q=0; !isspace(inputData[i]) && i<charCount; q++, i++){
+      fileName[q] = inputData[i];
+      
+    }
+    i++;
+    
+    //Calculate Times
+    if (stat(fileName, &info) != 0) { 
+      //fprintf(stderr,"fileinfo: cannot stat %s:", fileName); 
+      //perror(NULL); 
+    }
+    
+    if (S_ISREG(info.st_mode)){
+      char* deviceID;
+      deviceID = malloc ((LINE_MAX* sizeof(char))+1);
+      sprintf(deviceID, "%d/%d/%ld", major(info.st_dev),minor(info.st_dev),info.st_ino);
+      //fprintf(stderr, "device is : %s\n", deviceID);
+      
+      //fprintf(stderr, "directly BEFORE PUSH+++++++++++++++++++++++++=:\n");
+      //print(&idList);
+      
+      //fprintf(stderr, "DEVICE ID IS: %ld\n", deviceID);
+      
+      
+      
+      // fprintf(stderr, "directly AFFTER PUSH+++++++++++++++++++++++++=:\n");
+      // print(&idList);
+      
+      
+      
+      //fprintf(stderr, "RIGHT AFTER DEVICE PUSH\n");
+      //print(&idList);
+      //calculate how long ago in days hte file was accessed
+      long bytes = info.st_size; 
+      
+      //create flag to know whether or not you should add to totalbytes
+      int addFlag = 1;
+      //run through linked list, make sure id's aren't the same
+      //as the current file you're checking
+      //fprintf(stderr, "resetting g...................\n");
+      int g = 0;
+      //fprintf(stderr, "first is: %d\n", first);
+      
+      
+      if (first!=1){
+	//pop off zero
+	if (once == 0){
+	  //fprintf(stderr, "heresadfasd------------------------------------------------\n");
+	  pop(&idList);
+	  once++;}
+	  
+	  // fprintf(stderr, "before while:\n");
+	  //fprintf(stderr, "------------------------\n");
+	  //print(&idList);
+	  //fprintf(stderr, "------------------------\n");
+	  while (g<idListSize){
+	    //fprintf(stderr, "deviceID is %s\n", deviceID);
+	    //fprintf(stderr, "grablist is %s\n", grab(&idList));
+	    if (strcmp(deviceID, grab(&idList))==0){
+	      //fprintf(stderr, "indevif\n");
+	      addFlag = 0;
+	    }
+	    push(&idList, grab(&idList));
+	    pop(&idList);
+	    //fprintf(stderr, "in while g is: %d\n", g);
+	    //print(&idList);
+	    g++;
+	  }
+	  if (addFlag == 1){
+	    //fprintf(stderr, "inside addflag\n");
+	    totalBytes += bytes;
+	  }
+	  //printf("bytes is %ld\n", bytes);
+      }
+      //if its the first file add it to the bytes
+      if(first==1){
+	totalBytes += bytes;
+      }
+      //push next file onto list, increase list size, first flag set to 0
+      push(&idList, deviceID);
+      idListSize++;
+      first = 0;
+      //fprintf(stderr, "firs2 is: %d\n", first);
+    }
+  }
+  //fprintf(stderr, "hewre\n");
+  //check the units to be outputted
+  units = getenv("UNITS");
+  //set process ID to TMOM and grab it
+  //fprintf(stderr, "here\n");
+  mompid = getenv("TMOM");
+  if (mompid != NULL){
+    int intpid = atoi(mompid);
+    
+    //fprintf(stderr, "tmom is %s\n", mompid);
+    //fprintf(stderr, "intpid is %d\n", intpid);
+    
+    //if tmom is a positive int then send kill signal
+    if (intpid>0){
+      //wait();
+      //fprintf(stderr, "here\n");
+      sleep(3); kill(intpid,SIGUSR1);
+    }
+  }
+  /*fprintf(stderr, "LIst hUurr is\n");
+   p rint(&idList);                *
+   pop(&idList);
+   fprintf(stderr, "afer pop hUurr is\n");
+   print(&idList);
+   pop(&idList);
+   fprintf(stderr, "afer 2nd pop hUurr is\n");
+   print(&idList);
+   pop(&idList);
+   fprintf(stderr, "afer 3rd pop hUurr is\n");
+   print(&idList);*/
+  // printf("here\n");
+  //printf("units is %s\n", units);
+  if (units != NULL){
+    if((strcmp(units, "k") == 0) || (strcmp(units, "K") == 0)){
+      totalBytes = totalBytes/1000;
+      printf("%ldkB\n", totalBytes);
+      //fprintf(stderr, "std err %ldkB\n", totalBytes);
+    }
+    else{
+      printf("%ld\n", totalBytes);
+      //fprintf(stderr, "stderr %ld\n", totalBytes);
+    }
+  }
+  else{
+    printf("%ld\n", totalBytes);
+    //fprintf(stderr, "std err %ld\n", totalBytes);
+  }
+  return 0;
+}
+
+
+int initList(struct list *sList){
+  struct node *p;
+  p = malloc(sizeof(struct node));
+  p->data = (long) 0;
+  p->next = NULL;
+  sList->start = p;
+  sList->end = p;
+  
+  return 0;
+}
+
+int push(struct list *sList, char* data){
+  struct node *p;
+  p = malloc(sizeof(struct node));
+  p->data = data;
+  sList ->end->next = p;
+  
+  
+  sList->end = p;
+  
+  //fprintf(stderr, "slistenddata %ld\n", sList->end->data);
+  return 0;
+}
+
+char* grab(struct list *sList){
+  if(sList->start != NULL){
+    struct node *p = sList->start;
+    return p->data;
+  }
+  return 0;
+}
+
+int emptyCheck(struct list *sList){
+  if(sList->start != NULL)
+    return 0;
+  else
+    return 1;
+}
+
+int pop(struct list *sList){
+  if(sList->start != NULL){
+    struct node *p = sList->start;
+    sList->start = sList->start->next;
+    free(p);
+  }
+  
+  return 0;
+}
+
+int print(struct list *sList)
+{
+  struct node *p = sList->start;
+  while(p != sList->end) {
+    fprintf(stderr, "%s\n", p->data);
+    p=p->next;
+  }
+  fprintf(stderr, "%s\n", p->data);
+  //struct node *t = sList->end;
+  //fprintf(stderr, "END OF LIST IS %ld\n", t->data);
+  return 0;
+}

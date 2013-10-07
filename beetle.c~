@@ -1,0 +1,112 @@
+ 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+
+
+//Joseph Acosta
+//Program 1
+//CS 415
+
+
+//prototypes
+int isNumeric(const char*x);
+int changeCoor();
+
+//globals
+int size;
+int runs;
+int runCount;
+double totalTime = 0;
+double xcoor = 0;
+double ycoor = 0;
+
+
+int main(int argc, char *argv[]){
+  //long testNum = random();
+  //printf("random test number is %lu", testNum);
+  if (argc == 1){
+    printf("Error.\n");
+    exit(1);
+  }
+  
+  if (isNumeric(argv[1]) == 0 || isNumeric(argv[2]) == 0 || argv[3]){
+    printf("Please enter two valid numeric inputs\n");
+    exit(1);
+  }
+  
+  size = atoi(argv[1]);
+  runs = atoi(argv[2]);
+  runCount = runs;
+  //printf("size is: %d\n", size);
+  //printf("runs is: %d\n", runs);
+  //printf("abs value of -5 is %d\n", abs(-5));
+  
+  changeCoor();
+  
+  return 0;
+}
+
+int changeCoor(){
+  
+  while( runCount>0){
+  
+    //set to random number between 0 and 359
+    int steps = 0;
+    int secs = 0;
+    while(fabs(ycoor)<=(size/2) && fabs(xcoor)<=(size/2)){
+      //int randDegree = 90;
+      
+      //add a passing out second if its not the beginning
+      if (steps != 0)
+	secs++;
+	
+      //double randRadians = randDegree*0.0174532925;
+      double randRadians = random();
+      //printf("random Degree is %d\n", randDegree);
+      //printf("random radians is %f\n", randRadians);
+      //printf("sin is %f\n", sin(randRadians));
+      //printf("cos is %f\n", cos(randRadians));
+      
+      //add appropriate values to coordiant
+      xcoor += cos(randRadians);
+      ycoor += sin(randRadians);
+      steps++;
+      secs ++;
+      
+      //printf("x coor is %f, y coor is %f\n", xcoor, ycoor);
+      //printf("x coor plus:  %f\n",xcoor-5);
+      //printf("steps is %d\n", steps);
+      //printf("secs is %d\n\n", secs);
+      
+      //printf("x coor: %f less than size: %d?\n", xcoor, size);
+      //printf("y coor: %f less than size: %d?\n\n", ycoor, size);
+      
+      
+    }
+    ycoor=0;
+    xcoor=0;
+    //printf("--------------------------done with one inner loop------------------------\n");
+    
+    totalTime+=secs;
+    runCount--;
+    //printf("runCount after minus minus %d\n", runCount);
+  }
+  //printf("total time is %f\n", totalTime);
+  double avgTime = totalTime/runs;
+  printf("%d by %d square, %d beetles, mean beetle lifetime is is %.1lf\n", size, size, runs, avgTime);
+  return 0;
+
+}
+
+//this helper method grabbed from http://rosettacode.org/wiki/Determine_if_a_string_is_numeric#C
+int isNumeric (const char * s)
+{
+    if (s == NULL || *s == '\0' || isspace(*s))
+      return 0;
+    char * p;
+    strtod (s, &p);
+    return *p == '\0';
+}

@@ -1,0 +1,302 @@
+#define _GNU_SOURCE
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <string.h>
+#include <limits.h>
+#include <sys/stat.h> 
+#include <unistd.h>
+#include <errno.h> 
+#include <sys/sysmacros.h> 
+#include <time.h>
+
+//Joseph Acosta
+//accessed.c
+
+//structs
+struct node {
+  char* data;
+  struct node *next;
+};
+
+struct list {
+  struct node *start;
+  struct node *end;
+};
+
+//Declarations
+int initList(struct list *sList);
+int push(struct list *sList, char* data);
+char* grab(struct list *sList);
+int emptyCheck(struct list *sList);
+int pop(struct list *sList);
+int print(struct list *sList);
+
+
+//globals
+int num;
+struct list idList;
+int idListSize = 0;
+int once = 0;
+int first = 1;
+
+int main(int argc, char *argv[]){
+  initList(&idList);
+  //fprintf(stderr, "right after init\n");
+	//print(&idList);
+ // fprintf(stderr, "WHATUP!\n");
+  if (argc != 2)
+  {
+    fprintf(stderr, "Error. Please enter one argument\n");
+    exit(1);
+  }
+  num = atoi(argv[1]);
+  //fprintf(stdout, "in accessed num is: %d\n", num);
+  struct stat info;
+  
+  char* inputData;
+  inputData = malloc ((LINE_MAX* sizeof(char))+1);
+  
+  
+  //fprintf(stdout, "std in is %s\n", stdin);
+  //fgets(inputData, LINE_MAX, stdin);
+  //fprintf(stdout, "inputdata in accessed is: %s\n", inputData);
+  /*int i;
+   * for (i =0; i < 7; i++){
+   *  if (inputData[i] == '\n')
+   *    printf("return char");
+   *  printf("%c\n", inputData[i]);
+}*/
+  int e = 0;
+  char oneLet;
+  oneLet = fgetc(stdin);
+  while (oneLet != EOF){
+    //fprintf(stderr, "-- %c ", oneLet);
+    if (oneLet != '\n'){
+      inputData[e] = oneLet;
+      e++;
+    }
+    else{
+      inputData[e] = ' ';
+      e++;
+    }
+    //fprintf(stderr, "%d\n", oneLet!=EOF);
+    
+    oneLet = fgetc(stdin);
+  }
+  //fprintf(stderr, "inputdata in ACCESSED IS: %s\n", inputData);
+  //count number of chars in inputData
+  int j;
+  int charCount = 0;
+  for (j=0; inputData[j] != '\0'; j++){
+    charCount++;
+    
+  }
+  //printf("charCount is %d\n", charCount);
+  //while loop to separate file names on white space
+  int i = 0;
+  //fprintf(stdout, "WHATUP2!\n");
+  while(i<charCount){
+    
+    char* fileName;
+    fileName = malloc ((LINE_MAX* sizeof(char))+1);
+    
+    int q;
+    for (q=0; !isspace(inputData[i]) && i<charCount; q++, i++){
+      fileName[q] = inputData[i];
+      //printf("i is: %d\n", i);
+      //printf("q is: %d\n", q);
+      
+    }
+    i++;
+    
+    //Calculate Times
+    if (stat(fileName, &info) != 0) { 
+      //fprintf(stderr,"fileinfo: cannot stat %s:", fileName); 
+      //perror(NULL); 
+    }
+    
+    if (S_ISREG(info.st_mode)){
+      char* deviceID;
+      deviceID = malloc ((LINE_MAX* sizeof(char))+1);
+      sprintf(deviceID, "%d/%d/%ld", major(info.st_dev),minor(info.st_dev),info.st_ino);
+      //fprintf(stderr, "deviceID is:%s\n", deviceID);
+      //calculate how long ago in days hte file was accessed
+      double secondsAgo = time(NULL) - info.st_atime; 
+      //fprintf(stderr, "time in seconds is %f\n", secondsAgo);
+      double daysAgo = secondsAgo/60/60/24;
+      //fprintf(stderr, "time in days is %f\n", daysAgo);
+      //printf(" last accessed %ld seconds ago\n", secondsAgo); 
+      //printf(" last accessed %ld days ago\n", daysAgo); 
+      int addFlag = 1;
+      int g = 0;
+      if (first!=1){
+	//fprintf(stderr, "filename in first %s\n", fileName);
+	//fprintf(stderr, "in IF\n");
+	//print(&idList);
+	//pop off zero
+	if (once == 0){
+	  //fprintf(stderr, "heresadfasd------------------------------------------------\n");
+	  pop(&idList);
+	  once++;}
+	  //fprintf(stderr, "after one pop\n");
+	  //print(&idList);
+	  
+	  // fprintf(stderr, "before while:\n");
+	  //fprintf(stderr, "------------------------\n");
+	  //print(&idList);
+	  //fprintf(stderr, "------------------------\n");
+	  //fprintf(stderr, "id list size is %d\n", idListSize);
+	  while (g<idListSize){
+	    //fprintf(stderr, "deviceID is %s\n", deviceID);
+	    //fprintf(stderr, "grablist is %s\n", grab(&idList));
+	    if (strcmp(deviceID, grab(&idList))==0){
+	      //fprintf(stderr, "indevif\n");
+	      addFlag = 0;
+	    }
+	    push(&idList, grab(&idList));
+	    pop(&idList);
+	    //fprintf(stderr, "after push pop\n");
+	    //print(&idList);
+	    //fprintf(stderr, "in while g is: %d\n", g);
+	    //print(&idList);
+	    g++;
+	  }
+	  //fprintf(stderr, "add flag is %d\n", addFlag);
+	  //fprintf(stderr, "fileName is %s\n", fileName);
+	  if (addFlag == 1){
+	    //fprintf(stderr, "inside addflag\n");
+	    if (num > 0){
+	      //fprintf(stderr, "days ago: %f\n", daysAgo);
+	      //fprintf(stderr, "num is: %d\n", num);
+	      //printf("fileNmae is %s\n", fileName);
+	      // printf("daysAgo is %ld\n", daysAgo);
+	      //if it was not accessed for num days
+	      if (daysAgo > num){
+		//fprintf(stderr, "HEEHER\n");
+		printf("%s\n", fileName);}
+	    }
+	    //if num is negative
+	    if (num<0){
+	      //printf("here\n");
+	      //printf("NUMMMMM is %d\n", (num+num+num));
+	      //if it was accessed within num
+	      if (daysAgo <= (num*-1))
+		printf("%s\n", fileName);
+	    }
+	    //if num is 0
+	    if (num==0)
+	    {
+	      fprintf(stderr, "Please enter a valid argument\n");
+	      exit(1);
+	    }
+	  }
+	  //printf("bytes is %ld\n", bytes);
+      }
+      if (first == 1){
+	if (num > 0){
+	      //fprintf(stderr, "days ago: %f\n", daysAgo);
+	      //fprintf(stderr, "num is: %d\n", num);
+	      //printf("fileNmae is %s\n", fileName);
+	      // printf("daysAgo is %ld\n", daysAgo);
+	      //if it was not accessed for num days
+	      if (daysAgo > num){
+		//fprintf(stderr, "HEEHER\n");
+		printf("%s\n", fileName);}
+	    }
+	    //if num is negative
+	    if (num<0){
+	      //printf("here\n");
+	      //printf("NUMMMMM is %d\n", (num+num+num));
+	      //if it was accessed within num
+	      if (daysAgo <= (num*-1))
+		printf("%s\n", fileName);
+	    }
+	    //if num is 0
+	    if (num==0)
+	    {
+	      fprintf(stderr, "Please enter a valid argument\n");
+	      exit(1);
+	    }
+	
+      }
+      push(&idList, deviceID);
+      idListSize++;
+      first = 0;
+      
+      //if the num inputted was positive
+      //printf("num is %d\n", num);
+      
+    }
+  }
+  
+  
+  
+  
+  
+  return 0;
+}
+
+int initList(struct list *sList){
+  struct node *p;
+  p = malloc(sizeof(struct node));
+  p->data = (long) 0;
+  p->next = NULL;
+  sList->start = p;
+  sList->end = p;
+  
+  return 0;
+}
+
+int push(struct list *sList, char* data){
+  struct node *p;
+  p = malloc(sizeof(struct node));
+  p->data = data;
+  sList ->end->next = p;
+  
+  
+  sList->end = p;
+  
+  //fprintf(stderr, "slistenddata %ld\n", sList->end->data);
+  return 0;
+}
+
+char* grab(struct list *sList){
+  if(sList->start != NULL){
+    struct node *p = sList->start;
+    return p->data;
+  }
+  return 0;
+}
+
+int emptyCheck(struct list *sList){
+  if(sList->start != NULL)
+    return 0;
+  else
+    return 1;
+}
+
+int pop(struct list *sList){
+  if(sList->start != NULL){
+    struct node *p = sList->start;
+    sList->start = sList->start->next;
+    free(p);
+  }
+  
+  return 0;
+}
+
+int print(struct list *sList)
+{
+  struct node *p = sList->start;
+  while(p != sList->end) {
+    fprintf(stderr, "%s\n", p->data);
+    p=p->next;
+  }
+  fprintf(stderr, "%s\n", p->data);
+  //struct node *t = sList->end;
+  //fprintf(stderr, "END OF LIST IS %ld\n", t->data);
+  return 0;
+}
